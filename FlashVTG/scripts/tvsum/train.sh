@@ -12,7 +12,8 @@ eval_path=data/tvsum/tvsum_val.jsonl
 eval_split_name=val
 
 ######## setup video+text features
-feat_root=/home/caozhuo/data_ssd/tvsum
+# feat_root=/home/caozhuo/data_ssd/tvsum
+feat_root=/media/xiang/Slayer/flashVTG/data/tvsum
 
 # # video features
 v_feat_dim=0
