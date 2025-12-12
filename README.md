@@ -1,10 +1,12 @@
-# FlashVTG: Feature Layering and Adaptive Score Handling Network for Video Temporal Grounding
+# Enhancing FlashVTG with Paired GAN
 
-This repository is the official implementation of the paper **FlashVTG: Feature Layering and Adaptive Score Handling Network for Video Temporal Grounding**. (WACV 2025)
+This repository is built upon then paper **FlashVTG: Feature Layering and Adaptive Score Handling Network for Video Temporal Grounding**. (WACV 2025)
 
 > Zhuo Cao, Bingqing Zhang, Heming Du, Xin Yu, Xue Li, Sen Wang
 >
 > The University of Queensland, Australia
+>
+> [FlashVTG official repo](https://github.com/Zhuo-Cao/FlashVTG?tab=readme-ov-file)
 
 [**Preparation**](#-Preparation) | [**Training**](#-training) | [**Inference and Evaluation**](#-Inference-and-Evaluation) | [**Model Zoo**](#-model-zoo)
 
@@ -19,11 +21,9 @@ This repository is the official implementation of the paper **FlashVTG: Feature 
      ```bash
      git clone https://github.com/Zhuo-Cao/FlashVTG.git
      ```
-
    - Download the packages we used for training. Python version 3.12.2 is required for reproduce.
 
      `pip install -r requirements.txt`
-
 2. Download datasets
 
    Download QVHighlights and other datasets, please follow the instruction of [CGDETR](https://github.com/wjun0830/CGDETR/).
@@ -94,15 +94,13 @@ For QVHighlights test set, you could do the evaluation on [codalab](https://coda
 
 We provide multiple checkpoints and training logs here. Configuration can be find in each ``opt.json`` file.
 
-| Dataset                        | Model file                                                   |
-| :----------------------------- | ------------------------------------------------------------ |
+| Dataset                        | Model file                                                                                                                                               |
+| :----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | QVHighlights (Slowfast + CLIP) | [checkpoint and trainng log](https://www.dropbox.com/scl/fo/5p45sbdyw66dyd7uerqlu/ADa-udzNY7qINE72gU17ktQ?rlkey=x9vtaf6vseenja6yz4h9faycb&st=emtgjqyb&dl=0) |
 | QVHighlights (InternVideo2)    | [checkpoint and trainng log](https://www.dropbox.com/scl/fo/19ayu7qtfyo5k4qc1rlz8/ALSHdXX4bKfq8Jwet36zQQY?rlkey=xwqb2tdxjzpq2ydx3qof30484&st=ahdmmatn&dl=0) |
 | Charades (InternVideo2)        | [checkpoint and trainng log](https://www.dropbox.com/scl/fo/vxzx7o6221w35wx58655k/AN0tWBPRsvW9akunEYFSO0U?rlkey=8yt1guzfqqybiim4l5nfw4siy&st=xsp6juc9&dl=0) |
 | Charades (VGG)                 | [checkpoint and trainng log](https://www.dropbox.com/scl/fo/2z5o51f4fmirduzdz6jw6/AEOjqAtcKdYgBKZDuIfqzjw?rlkey=7xyai6h0ct5npcr4jwja4vjkc&st=25wjllzd&dl=0) |
 | TACoS                          | [checkpoint and trainng log](https://www.dropbox.com/scl/fo/ul45aq5zkgzzb8k9wh70p/AL1rSpma3xwkhyHvMvWjFkc?rlkey=4ed8t64t7tdg3wssveoosvr82&st=xpmp5r9a&dl=0) |
-
-
 
 # Acknowledgements
 
