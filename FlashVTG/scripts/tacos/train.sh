@@ -12,7 +12,8 @@ eval_path=data/tacos/test.jsonl
 eval_split_name=val
 
 ######## setup video+text features
-feat_root=/home/caozhuo/data_ssd/tacos
+# feat_root=/home/caozhuo/data_ssd/tacos
+feat_root=/media/xiang/Slayer/flashVTG/data/tacos
 
 # video features
 v_feat_dim=0

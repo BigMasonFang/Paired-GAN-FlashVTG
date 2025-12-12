@@ -1,8 +1,8 @@
 dset_name=charadesSTA
 ctx_mode=video_tef
-v_feat_types=vgg
+v_feat_types=slowfast_clip
 t_feat_type=clip 
-results_root=results
+results_root=results_char_gan
 exp_id=demo
 
 ######## data paths
@@ -11,50 +11,65 @@ eval_path=data/charades_sta/charades_sta_test_tvr_format.jsonl
 eval_split_name=val
 
 ######## setup video+text features
-feat_root=/home/userid/data_ssd/charades-sta/charades
+# feat_root=/home/caozhuo/data_ssd/charades-sta/charades
+feat_root=/home/xiang_fang1/Desktop/flashVTG/data/charades
 
 # video features
 v_feat_dim=0
 v_feat_dirs=()
-if [[ ${v_feat_types} == *"vgg"* ]]; then
-  v_feat_dirs+=(${feat_root}/vgg_features/rgb_features)
-  (( v_feat_dim += 4096 ))  # double brackets for arithmetic op, no need to use ${v_feat_dim}
+if [[ ${v_feat_types} == *"slowfast"* ]]; then
+  v_feat_dirs+=(${feat_root}/slowfast_features)
+  (( v_feat_dim += 2304 ))  # double brackets for arithmetic op, no need to use ${v_feat_dim}
 fi
-
+if [[ ${v_feat_types} == *"clip"* ]]; then
+  v_feat_dirs+=(${feat_root}/clip_features)
+  (( v_feat_dim += 512 ))
+fi
 
 # text features
 if [[ ${t_feat_type} == "clip" ]]; then
   t_feat_dir=${feat_root}/clip_text_features/
-  t_feat_dim=300
+  t_feat_dim=512
 else
   echo "Wrong arg for t_feat_type."
   exit 1
 fi
 
-
 #### training
-bsz=16
+bsz=128
 max_v_l=-1
-max_q_l=-1
+max_q_l=32
 eval_epoch=1
 weight_decay=0.0001
 eval_bsz=1
 
 enc_layers=3
+dec_layers=2
 t2v_layers=6
 dummy_layers=2
 num_dummies=40
-kernel_size=3
-num_conv_layers=2
+kernel_size=5
+num_conv_layers=1
 num_mlp_layers=5
-num_dummies=40
 
 lw_reg=1
 lw_cls=5
 lw_sal=0.01
 lw_saliency=0.8
+lw_dummy=10
+lw_confidence=1
 label_loss_coef=0.1
 nms_type=normal
+
+#### GAN Configuration (New additions)
+add_gan=True
+lambda_gan=0.05
+gan_dis_type=1 # 1 is attention, 2 is LSTM+CNN, 0 is LSTM
+gan_dis_loss=2 # 1 is wgan_gp_mse_loss, 2 is feature matching loss
+mask_type=binary
+mix_saliency=False
+
+seed=42
 
 PYTHONPATH=$PYTHONPATH:. python FlashVTG/train.py \
 data/MR.py \
@@ -75,8 +90,8 @@ data/MR.py \
 --dummy_layers ${dummy_layers} \
 --max_v_l ${max_v_l} \
 --max_q_l ${max_q_l} \
---n_epoch 1 \
---lr_drop 30 \
+--n_epoch 50 \
+--lr_drop 50 \
 --eval_epoch ${eval_epoch} \
 --wd ${weight_decay} \
 --eval_bsz ${eval_bsz} \
@@ -92,7 +107,13 @@ data/MR.py \
 --num_mlp_layers ${num_mlp_layers} \
 --label_loss_coef ${label_loss_coef} \
 --nms_type ${nms_type} \
---clip_length 0.166666 \
---lr 1e-4 \
---num_dummies ${num_dummies} \
+--clip_length 1 \
+--lr 2.5e-4 \
+--seed ${seed} \
+--add_gan ${add_gan} \
+--gan_dis_type ${gan_dis_type} \
+--gan_dis_loss ${gan_dis_loss} \
+--lambda_gan ${lambda_gan} \
+--mask_type ${mask_type} \
+--mix_saliency ${mix_saliency}\
 ${@:1}

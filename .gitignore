@@ -1,2 +1,8 @@
 /results
 /.vscode
+
+/results_*
+
+# **/standalone_eval
+
+__pycache__

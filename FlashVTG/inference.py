@@ -33,7 +33,8 @@ logging.basicConfig(
 )
 
 
-def post_processing_mr_nms(mr_res, nms_thd, max_before_nms, max_after_nms, nms_type):
+def post_processing_mr_nms(mr_res, nms_thd, max_before_nms, max_after_nms,
+                           nms_type):
     mr_res_after_nms = []
     for e in mr_res:
         bnd = torch.tensor(e["pred_relevant_windows"])
@@ -57,18 +58,23 @@ def post_processing_mr_nms(mr_res, nms_thd, max_before_nms, max_after_nms, nms_t
     return mr_res_after_nms
 
 
-def eval_epoch_post_processing(submission, opt, gt_data, save_submission_filename):
+def eval_epoch_post_processing(submission, opt, gt_data,
+                               save_submission_filename):
     # IOU_THDS = (0.5, 0.7)
     logger.info("Saving/Evaluating before nms results")
     submission_path = os.path.join(opt.results_dir, save_submission_filename)
     save_jsonl(submission, submission_path)
 
     if opt.eval_split_name in ["val"]:  # since test_public has no GT
-        metrics = eval_submission(
-            submission, gt_data, verbose=opt.debug, match_number=not opt.debug
-        )
+        metrics = eval_submission(submission,
+                                  gt_data,
+                                  verbose=opt.debug,
+                                  match_number=not opt.debug)
         save_metrics_path = submission_path.replace(".jsonl", "_metrics.json")
-        save_json(metrics, save_metrics_path, save_pretty=True, sort_keys=False)
+        save_json(metrics,
+                  save_metrics_path,
+                  save_pretty=True,
+                  sort_keys=False)
         latest_file_paths = [submission_path, save_metrics_path]
     else:
         metrics = None
@@ -88,8 +94,7 @@ def eval_epoch_post_processing(submission, opt, gt_data, save_submission_filenam
 
         logger.info("Saving/Evaluating nms results")
         submission_nms_path = submission_path.replace(
-            ".jsonl", "_nms_thd_{}.jsonl".format(opt.nms_thd)
-        )
+            ".jsonl", "_nms_thd_{}.jsonl".format(opt.nms_thd))
         save_jsonl(submission_after_nms, submission_nms_path)
         if opt.eval_split_name == "val":
             metrics_nms = eval_submission(
@@ -99,11 +104,11 @@ def eval_epoch_post_processing(submission, opt, gt_data, save_submission_filenam
                 match_number=not opt.debug,
             )
             save_metrics_nms_path = submission_nms_path.replace(
-                ".jsonl", "_metrics.json"
-            )
-            save_json(
-                metrics_nms, save_metrics_nms_path, save_pretty=True, sort_keys=False
-            )
+                ".jsonl", "_metrics.json")
+            save_json(metrics_nms,
+                      save_metrics_nms_path,
+                      save_pretty=True,
+                      sort_keys=False)
             latest_file_paths += [submission_nms_path, save_metrics_nms_path]
         else:
             metrics_nms = None
@@ -114,11 +119,15 @@ def eval_epoch_post_processing(submission, opt, gt_data, save_submission_filenam
         metrics_nms = None
     return metrics, metrics_nms, latest_file_paths
 
+
 # for HL
 @torch.no_grad()
-def compute_hl_results(
-    model, eval_loader, opt, epoch_i=None, criterion=None, tb_writer=None
-):
+def compute_hl_results(model,
+                       eval_loader,
+                       opt,
+                       epoch_i=None,
+                       criterion=None,
+                       tb_writer=None):
     model.eval()
     if criterion:
         assert eval_loader.dataset.load_labels
@@ -135,11 +144,13 @@ def compute_hl_results(
     for batch in tqdm(eval_loader, desc="compute st ed scores"):
         query_meta = batch[0]
 
-        model_inputs, targets = prepare_batch_inputs(batch[1], opt.device, non_blocking=opt.pin_memory)
+        model_inputs, targets = prepare_batch_inputs(
+            batch[1], opt.device, non_blocking=opt.pin_memory)
 
         if targets is not None:
             targets["label"] = batch[0]
-            targets["fps"] = torch.full((256,), 1/opt.clip_length).to(opt.device) # if datasets is qv, fps is 0.5, charades' is 1
+            targets["fps"] = torch.full((256, ), 1 / opt.clip_length).to(
+                opt.device)  # if datasets is qv, fps is 0.5, charades' is 1
         else:
             targets = {}
 
@@ -157,12 +168,13 @@ def compute_hl_results(
             if opt.dset_name in ["tvsum"]:
                 for i in range(20):
                     pred = pred.cpu()
-                    cur_pred = pred[: len(label)]
+                    cur_pred = pred[:len(label)]
                     inds = torch.argsort(cur_pred, descending=True, dim=-1)
 
                     # video_id = self.get_video_id(idx)
                     cur_label = torch.Tensor(label)[:, i]
-                    cur_label = torch.where(cur_label > cur_label.median(), 1.0, 0.0)
+                    cur_label = torch.where(cur_label > cur_label.median(),
+                                            1.0, 0.0)
 
                     cur_label = cur_label[inds].tolist()[:topk]
 
@@ -187,7 +199,7 @@ def compute_hl_results(
                     video_ap.append(ap)
 
             elif opt.dset_name in ["youtube_uni"]:
-                cur_pred = pred[: len(label)]
+                cur_pred = pred[:len(label)]
                 # if opt.dset_name == "tvsum_sfc":
                 cur_pred = cur_pred.cpu()
                 inds = torch.argsort(cur_pred, descending=True, dim=-1)
@@ -228,11 +240,15 @@ def compute_hl_results(
 
     return submmission, loss_meters
 
+
 # for MR
 @torch.no_grad()
-def compute_mr_results(
-    model, eval_loader, opt, epoch_i=None, criterion=None, tb_writer=None
-):
+def compute_mr_results(model,
+                       eval_loader,
+                       opt,
+                       epoch_i=None,
+                       criterion=None,
+                       tb_writer=None):
     model.eval()
     if criterion:
         assert eval_loader.dataset.load_labels
@@ -245,11 +261,13 @@ def compute_mr_results(
     for batch in tqdm(eval_loader, desc="compute st ed scores"):
         query_meta = batch[0]
 
-        model_inputs, targets = prepare_batch_inputs(batch[1], opt.device, non_blocking=opt.pin_memory)
+        model_inputs, targets = prepare_batch_inputs(
+            batch[1], opt.device, non_blocking=opt.pin_memory)
 
         if targets is not None:
             targets["label"] = batch[0]
-            targets["fps"] = torch.full((256,), 1/opt.clip_length).to(opt.device) # if datasets is qv, fps is 0.5, charades' is 1
+            targets["fps"] = torch.full((256, ), 1 / opt.clip_length).to(
+                opt.device)  # if datasets is qv, fps is 0.5, charades' is 1
         else:
             targets = {}
         outputs = model(**model_inputs, targets=targets)
@@ -260,34 +278,31 @@ def compute_mr_results(
             _saliency_scores = outputs["_out"]["saliency"].unsqueeze(0)
 
             saliency_scores = []
-            valid_vid_lengths = outputs["_out"]["video_msk"].sum(1).cpu().tolist()
+            valid_vid_lengths = outputs["_out"]["video_msk"].sum(
+                1).cpu().tolist()
             for j in range(len(valid_vid_lengths)):
-                ss = _saliency_scores[j, : int(valid_vid_lengths[j])].tolist()
+                ss = _saliency_scores[j, :int(valid_vid_lengths[j])].tolist()
                 ss = [float(f"{e:.4f}") for e in ss]
                 saliency_scores.append(ss)
         else:
-            bsz, n_queries = outputs["pred_spans"].shape[
-                :2
-            ]  # # (bsz, #queries, max_v_l *2)
+            bsz, n_queries = outputs[
+                "pred_spans"].shape[:2]  # # (bsz, #queries, max_v_l *2)
             pred_spans_logits = outputs["pred_spans"].view(
-                bsz, n_queries, 2, opt.max_v_l
-            )
-            pred_span_scores, pred_spans = F.softmax(pred_spans_logits, dim=-1).max(
-                -1
-            )  # 2 * (bsz, #queries, 2)
+                bsz, n_queries, 2, opt.max_v_l)
+            pred_span_scores, pred_spans = F.softmax(
+                pred_spans_logits, dim=-1).max(-1)  # 2 * (bsz, #queries, 2)
             scores = torch.prod(pred_span_scores, 2)  # (bsz, #queries)
             pred_spans[:, 1] += 1
             pred_spans *= opt.clip_length
 
         # compose predictions
         for idx, (meta, spans, score) in enumerate(
-            zip(query_meta, pred_spans.cpu(), scores.cpu())
-        ):
-            spans = torch.clamp(outputs["_out"]["boundary"], 0, meta["duration"])
+                zip(query_meta, pred_spans.cpu(), scores.cpu())):
+            spans = torch.clamp(outputs["_out"]["boundary"], 0,
+                                meta["duration"])
             cur_ranked_preds = spans.tolist()
-            cur_ranked_preds = [
-                [float(f"{e:.4f}") for e in row] for row in cur_ranked_preds
-            ]
+            cur_ranked_preds = [[float(f"{e:.4f}") for e in row]
+                                for row in cur_ranked_preds]
             cur_query_pred = dict(
                 qid=meta["qid"],
                 query=meta["query"],
@@ -301,9 +316,7 @@ def compute_mr_results(
         losses = sum(loss_dict.values())
         loss_dict["loss_overall"] = float(losses)  # for logging only
         for k, v in loss_dict.items():
-            loss_meters[k].update(
-                float(v)
-            )
+            loss_meters[k].update(float(v))
 
     if write_tb and len(loss_meters) != 1:
         for k, v in loss_meters.items():
@@ -357,9 +370,9 @@ def compute_mr_results(
 
 def get_eval_res(model, eval_loader, opt, epoch_i, criterion, tb_writer):
     """compute and save query and video proposal embeddings"""
-    eval_res, eval_loss_meters = compute_mr_results(
-        model, eval_loader, opt, epoch_i, criterion, tb_writer
-    )  # list(dict)
+    eval_res, eval_loss_meters = compute_mr_results(model, eval_loader, opt,
+                                                    epoch_i, criterion,
+                                                    tb_writer)  # list(dict)
     return eval_res, eval_loss_meters
 
 
@@ -395,21 +408,23 @@ def eval_epoch(
 
     # tvsum
     if opt.dset_name in ["tvsum", "youtube_uni"]:
-        metrics, eval_loss_meters = compute_hl_results(
-            model, eval_loader, opt, epoch_i, criterion, tb_writer
-        )
+        metrics, eval_loss_meters = compute_hl_results(model, eval_loader, opt,
+                                                       epoch_i, criterion,
+                                                       tb_writer)
 
         # to match original save format
         submission = [{"brief": metrics}]
         submission_path = os.path.join(opt.results_dir, "latest_metric.jsonl")
         save_jsonl(submission, submission_path)
 
-        return submission[0], submission[0], eval_loss_meters, [submission_path]
+        return submission[0], submission[0], eval_loss_meters, [
+            submission_path
+        ]
 
     else:
-        submission, eval_loss_meters = get_eval_res(
-            model, eval_loader, opt, epoch_i, criterion, tb_writer
-        )
+        submission, eval_loss_meters = get_eval_res(model, eval_loader, opt,
+                                                    epoch_i, criterion,
+                                                    tb_writer)
 
         if opt.dset_name in ["charadesSTA", "tacos", "nlq"]:
             new_submission = []
@@ -419,8 +434,7 @@ def eval_epoch(
             submission = new_submission
 
         metrics, metrics_nms, latest_file_paths = eval_epoch_post_processing(
-            submission, opt, eval_dataset.data, save_submission_filename
-        )
+            submission, opt, eval_dataset.data, save_submission_filename)
         return metrics, metrics_nms, eval_loss_meters, latest_file_paths
 
 
@@ -436,18 +450,25 @@ def setup_model(opt):
 
     param_dicts = [
         {
-            "params": [p for n, p in model.named_parameters() if p.requires_grad],
+            "params":
+            [p for n, p in model.named_parameters() if p.requires_grad],
             "lr": opt.lr,
         },
     ]
     optimizer = torch.optim.AdamW(param_dicts, lr=opt.lr, weight_decay=opt.wd)
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, opt.lr_drop, gamma=0.5)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
+                                                   opt.lr_drop,
+                                                   gamma=0.5)
     # lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=15, min_lr=1e-4)
 
     if opt.resume_adapter is not None:
         logger.info(f"Load adapter checkpoint from {opt.resume_adapter}")
         adapter_checkpoint = torch.load(opt.resume_adapter)
-        adapter_state_dict = {k: v for k, v in adapter_checkpoint['state_dict'].items() if k.startswith('adapter')}
+        adapter_state_dict = {
+            k: v
+            for k, v in adapter_checkpoint['state_dict'].items()
+            if k.startswith('adapter')
+        }
         model.load_state_dict(adapter_state_dict, strict=False)
 
     if opt.resume is not None:
@@ -479,6 +500,97 @@ def setup_model(opt):
         )
 
     return model, criterion, optimizer, lr_scheduler
+
+
+def setup_model_with_gan(opt):
+    """Setup model with GAN components for highlight detection"""
+    logger.info("setup GAN model/optimizer/scheduler")
+    from FlashVTG.model import build_model1
+    from FlashVTG.gan_model import FlashVTGWithGAN, TemporalDiscriminator, MultiHeadAttentionDiscriminator, ConvLSTMDiscriminator
+
+    # 1. Build original FlashVTG model
+    model, criterion = build_model1(opt)
+
+    input_dim = opt.v_feat_dim
+    # if "tef" in opt.ctx_mode:
+    #     input_dim += 2
+    logger.info(f"Discriminator video Input Dimension: {input_dim}")
+
+    try:
+        text_dim = opt.t_feat_dim # Get text dimension from config
+    except Exception:
+        text_dim = 0
+
+    # 2. Add Temporal Discriminator
+    if opt.gan_dis_type == 1:
+        discriminator = MultiHeadAttentionDiscriminator(input_dim=input_dim, text_dim=text_dim)
+    elif opt.gan_dis_type == 2:
+        discriminator = ConvLSTMDiscriminator(input_dim=input_dim, text_dim=text_dim)
+    else:
+        discriminator = TemporalDiscriminator(input_dim=input_dim, text_dim=text_dim, hidden_dim=256)
+
+    # 3. Wrap with GAN module
+    gan_model = FlashVTGWithGAN(model, discriminator, mask_type=opt.mask_type, mix_saliency=opt.mix_saliency)
+
+    # Device placement
+    if opt.device.type == "cuda":
+        logger.info("CUDA enabled for GAN components")
+        gan_model.to(opt.device)
+        criterion.to(opt.device)
+
+    # 4. Separate optimizers
+    param_dicts = [
+        {
+            "params": [
+                p for n, p in gan_model.flash_vtg.named_parameters()
+                if p.requires_grad
+            ]
+        },
+        {
+            "params": gan_model.discriminator.parameters(),
+            "lr": opt.lr * 0.5
+        }  # Slower lr for discriminator
+    ]
+
+    optimizer_g = torch.optim.AdamW(param_dicts[0]["params"],
+                                    lr=opt.lr,
+                                    weight_decay=opt.wd)
+
+    optimizer_d = torch.optim.AdamW(param_dicts[1]["params"],
+                                    lr=opt.lr * 0.5,
+                                    weight_decay=opt.wd)
+
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer_g,
+                                                   opt.lr_drop,
+                                                   gamma=0.5)
+
+    # 5. Checkpoint loading (modified for GAN)
+    if opt.resume is not None:
+        logger.info(f"Loading GAN checkpoint from {opt.resume}")
+        checkpoint = torch.load(opt.resume, map_location="cpu")
+
+        # Load FlashVTG weights
+        gan_model.flash_vtg.load_state_dict(
+            {
+                k.replace("module.", ""): v
+                for k, v in checkpoint['model'].items()
+            },
+            strict=True)
+
+        # Load discriminator if available
+        if 'discriminator' in checkpoint:
+            gan_model.discriminator.load_state_dict(
+                checkpoint['discriminator'])
+            logger.info("Loaded discriminator weights from checkpoint")
+
+        # Optional: Load optimizers
+        if opt.resume_all:
+            optimizer_g.load_state_dict(checkpoint['optimizer_g'])
+            optimizer_d.load_state_dict(checkpoint['optimizer_d'])
+            lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
+            opt.start_epoch = checkpoint["epoch"] + 1
+
+    return gan_model, criterion, (optimizer_g, optimizer_d), lr_scheduler
 
 
 def start_inference(train_opt=None, split=None, splitfile=None):
@@ -526,23 +638,23 @@ def start_inference(train_opt=None, split=None, splitfile=None):
         dset_domain=opt.dset_domain,
     )
     model, criterion, _, _ = setup_model(opt)
-    save_submission_filename = "hl_{}_submission.jsonl".format(opt.eval_split_name)
+    save_submission_filename = "hl_{}_submission.jsonl".format(
+        opt.eval_split_name)
 
     logger.info("Starting inference...")
     with torch.no_grad():
         metrics_no_nms, metrics_nms, eval_loss_meters, latest_file_paths = eval_epoch(
-            model, eval_dataset, opt, save_submission_filename, criterion=criterion
-        )
+            model,
+            eval_dataset,
+            opt,
+            save_submission_filename,
+            criterion=criterion)
     if opt.eval_split_name == "val":
-        logger.info(
-            "metrics_no_nms {}".format(
-                pprint.pformat(metrics_no_nms["brief"], indent=4)
-            )
-        )
+        logger.info("metrics_no_nms {}".format(
+            pprint.pformat(metrics_no_nms["brief"], indent=4)))
     if metrics_nms is not None:
-        logger.info(
-            "metrics_nms {}".format(pprint.pformat(metrics_nms["brief"], indent=4))
-        )
+        logger.info("metrics_nms {}".format(
+            pprint.pformat(metrics_nms["brief"], indent=4)))
 
 
 from sys import argv

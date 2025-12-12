@@ -12,11 +12,13 @@ eval_split_name=val
 
 ######## setup video+text features
 # video features
-v_feat_dirs=/home/caozhuo/data_ssd/qvhighlights_internvideo2/qvhighlight_6b/
+# v_feat_dirs=/home/caozhuo/data_ssd/qvhighlights_internvideo2/qvhighlight_6b/
+v_feat_dirs=/home/xiang_fang1/Desktop/flashVTG/data/highlight/intervideo2_video/qvhighlight_6b
 v_feat_dim=768
 
 # text features
-t_feat_dir=/home/caozhuo/data_ssd/qvhighlights_internvideo2/qvhighlight_llama_text_feature/
+# t_feat_dir=/home/caozhuo/data_ssd/qvhighlights_internvideo2/qvhighlight_llama_text_feature/
+t_feat_dir=/home/xiang_fang1/Desktop/flashVTG/data/highlight/llama_text/qvhighlight_llama_text_feature
 t_feat_dim=4096
 
 #### training
